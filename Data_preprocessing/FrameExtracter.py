@@ -36,14 +36,14 @@ def extract_all_frames(video_path, output_folder):
     ]
     subprocess.run(command, shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
-def process_videos_in_folder(folder_path, output_root, actor_folder_relevant):
+def process_videos_in_folder(folder_path, output_root, actor_folder_relevant, position):
     """
     处理指定文件夹中的所有视频文件。
 
     :param folder_path: 包含视频文件的文件夹路径
     :param output_root: 存放输出图片的根目录
     """
-    for video_file in tqdm(os.listdir(folder_path)):
+    for video_file in tqdm(os.listdir(folder_path), position=position, leave=False, desc="Video progress"):
         video_path = os.path.join(folder_path, video_file)
         output_folder = os.path.join(output_root, actor_folder_relevant, os.path.splitext(video_file)[0])
         extract_frames(video_path, output_folder)
@@ -68,7 +68,8 @@ def batch_process_dataset(dataset_root, output_root):
     :param dataset_root: 数据集的根目录
     :param output_root: 存放输出图片的根目录
     """
-    for folder_name in tqdm(os.listdir(dataset_root)):
+    position = 0  # 主进度条的位置
+    for folder_name in tqdm(os.listdir(dataset_root), position=position, leave=True, desc="Overall progress"):
         # print(folder_name)
         if folder_name.startswith("Video_Song_Actor_") or folder_name.startswith("Video_Speech_Actor_"):
             actor_folder_suffix = "Actor_" + folder_name.split('_')[-1]
@@ -77,7 +78,7 @@ def batch_process_dataset(dataset_root, output_root):
             actor_folder_relevant = os.path.join(folder_name, actor_folder_suffix)
             print(actor_folder)
             if os.path.isdir(actor_folder):
-                process_videos_in_folder(actor_folder, output_root, actor_folder_relevant)
+                process_videos_in_folder(actor_folder, output_root, actor_folder_relevant, position=position+1)
 
 # 示例使用
 dataset_root = 'E:\Dataset_Raw'  # 视频文件夹的路径
