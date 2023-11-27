@@ -1,5 +1,6 @@
 import os
 import subprocess
+from tqdm import tqdm
 
 
 def extract_frames(video_path, output_folder, fps=2):
@@ -14,7 +15,7 @@ def extract_frames(video_path, output_folder, fps=2):
         os.makedirs(output_folder)
 
     command = [
-        'ffmpeg', '-i', video_path, '-vf', f'fps={fps}',
+        'ffmpeg', '-loglevel', 'panic', '-i', video_path, '-vf', f'fps={fps}',
         f'{output_folder}/frame_%04d.png'
     ]
     subprocess.run(command, shell=True)
@@ -33,7 +34,7 @@ def extract_all_frames(video_path, output_folder):
         'ffmpeg', '-i', video_path,
         f'{output_folder}/frame_%04d.png'
     ]
-    subprocess.run(command, shell=True)
+    subprocess.run(command, shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
 def process_videos_in_folder(folder_path, output_root, actor_folder_relevant):
     """
@@ -42,7 +43,7 @@ def process_videos_in_folder(folder_path, output_root, actor_folder_relevant):
     :param folder_path: 包含视频文件的文件夹路径
     :param output_root: 存放输出图片的根目录
     """
-    for video_file in os.listdir(folder_path):
+    for video_file in tqdm(os.listdir(folder_path)):
         video_path = os.path.join(folder_path, video_file)
         output_folder = os.path.join(output_root, actor_folder_relevant, os.path.splitext(video_file)[0])
         extract_frames(video_path, output_folder)
@@ -67,7 +68,7 @@ def batch_process_dataset(dataset_root, output_root):
     :param dataset_root: 数据集的根目录
     :param output_root: 存放输出图片的根目录
     """
-    for folder_name in os.listdir(dataset_root):
+    for folder_name in tqdm(os.listdir(dataset_root)):
         # print(folder_name)
         if folder_name.startswith("Video_Song_Actor_") or folder_name.startswith("Video_Speech_Actor_"):
             actor_folder_suffix = "Actor_" + folder_name.split('_')[-1]
@@ -80,6 +81,6 @@ def batch_process_dataset(dataset_root, output_root):
 
 # 示例使用
 dataset_root = 'E:\Dataset_Raw'  # 视频文件夹的路径
-output_root = 'E:\Dataset_Frames'  # 输出图片的根目录
+output_root = 'E:\Dataset_Frames_test'  # 输出图片的根目录
 # batch_extract_all_frames(video_folder, output_root)
 batch_process_dataset(dataset_root, output_root)
