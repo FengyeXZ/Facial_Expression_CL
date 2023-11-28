@@ -47,19 +47,6 @@ def process_videos_in_folder(folder_path, output_root, actor_folder_relevant, po
         video_path = os.path.join(folder_path, video_file)
         output_folder = os.path.join(output_root, actor_folder_relevant, os.path.splitext(video_file)[0])
         extract_frames(video_path, output_folder)
-
-# def batch_extract_all_frames(video_folder, output_root):
-#     """
-#     批量提取视频文件夹中所有视频的所有帧。
-
-#     :param video_folder: 存放视频文件的文件夹
-#     :param output_root: 存放输出图片的根目录
-#     """
-#     for video_file in os.listdir(video_folder):
-#         video_path = os.path.join(video_folder, video_file)
-#         output_folder = os.path.join(output_root, os.path.splitext(video_file)[0])
-#         # extract_frames(video_path, output_folder)
-#         extract_all_frames(video_path, output_folder)
         
 def batch_process_dataset(dataset_root, output_root):
     """
@@ -76,12 +63,11 @@ def batch_process_dataset(dataset_root, output_root):
             # print(actor_folder_suffix)
             actor_folder = os.path.join(dataset_root, folder_name, actor_folder_suffix)
             actor_folder_relevant = os.path.join(folder_name, actor_folder_suffix)
-            print(actor_folder)
+            # print(actor_folder)
             if os.path.isdir(actor_folder):
                 process_videos_in_folder(actor_folder, output_root, actor_folder_relevant, position=position+1)
 
 # 示例使用
 dataset_root = 'E:\Dataset_Raw'  # 视频文件夹的路径
 output_root = 'E:\Dataset_Frames_test'  # 输出图片的根目录
-# batch_extract_all_frames(video_folder, output_root)
 batch_process_dataset(dataset_root, output_root)
