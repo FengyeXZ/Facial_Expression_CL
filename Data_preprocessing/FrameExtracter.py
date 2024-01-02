@@ -20,6 +20,7 @@ def extract_frames(video_path, output_folder, fps=2):
     ]
     subprocess.run(command, shell=True)
 
+
 def extract_all_frames(video_path, output_folder):
     """
     使用 ffmpeg 提取视频的所有帧。
@@ -36,6 +37,7 @@ def extract_all_frames(video_path, output_folder):
     ]
     subprocess.run(command, shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
+
 def process_videos_in_folder(folder_path, output_root, actor_folder_relevant, position):
     """
     处理指定文件夹中的所有视频文件。
@@ -47,7 +49,8 @@ def process_videos_in_folder(folder_path, output_root, actor_folder_relevant, po
         video_path = os.path.join(folder_path, video_file)
         output_folder = os.path.join(output_root, actor_folder_relevant, os.path.splitext(video_file)[0])
         extract_frames(video_path, output_folder)
-        
+
+
 def batch_process_dataset(dataset_root, output_root):
     """
     批量处理数据集中的所有视频文件。
@@ -66,6 +69,7 @@ def batch_process_dataset(dataset_root, output_root):
             # print(actor_folder)
             if os.path.isdir(actor_folder):
                 process_videos_in_folder(actor_folder, output_root, actor_folder_relevant, position=position+1)
+
 
 # 示例使用
 dataset_root = 'E:\Dataset_Raw'  # 视频文件夹的路径

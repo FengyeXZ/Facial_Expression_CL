@@ -2,7 +2,7 @@ from mtcnn.mtcnn import MTCNN
 import cv2
 import numpy as np
 
-image = cv2.imread("Dataset/Video_Song_Actor_01/Actor_01/01-02-01-01-01-01-01/frame_0002.png")
+image = cv2.imread("../target/level_1/M003/angry/img_1.png")
 
 detector = MTCNN()
 
@@ -24,7 +24,7 @@ print(keypoints)
 for face in result:
     # 获取边框坐标
     x, y, width, height = face['box']
-    
+
     # 绘制矩形
     # 参数分别是：图像、左上角点、右下角点、颜色、线宽
     cv2.rectangle(image, (x, y), (x + width, y + height), (0, 255, 0), 2)
@@ -32,12 +32,12 @@ for face in result:
 def face_align(image, left_eye, right_eye):
     # calculate the center point between two eyes
     eye_center = ((left_eye[0] + right_eye[0]) // 2, (left_eye[1] + right_eye[1]) // 2)
-    
+
     # calculate the angle between two eyes
     dy = right_eye[1] - left_eye[1]
     dx = right_eye[0] - left_eye[0]
     angle = np.degrees(np.arctan2(dy, dx))
-    
+
     # calculate the matrix for affine transformation
     M = cv2.getRotationMatrix2D(eye_center, angle, scale=1)
 
