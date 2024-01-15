@@ -43,7 +43,7 @@ def file_classifier(input_path: str, output_path: str, emotions: dict, target_em
 
 def main():
     target_emotions = {5: 'angry', 7: 'disgust', 6: 'fear', 3: 'happy', 4: 'sad', 8: 'surprise'}
-    source_path = 'F:/Dataset_Frames_processed'
+    source_path = '/media/shang/My Passport/Dataset_Frames_processed'
     target_path = 'expData-processed'
     if not os.path.exists(target_path):
         os.makedirs(target_path)
