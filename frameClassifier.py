@@ -35,7 +35,7 @@ def file_classifier(input_path: str, output_path: str, emotions: dict, target_em
             if emotion_num == target_emo_num:
                 emotion_name = emotions[emotion_num]
                 current_counter = file_moving(os.path.join(image_path, emotion_folder), os.path.join(output_path,
-                                                                                                     domain[-2:],
+                                                                                                     str(domain_num),
                                                                                                      emotion_name),
                                               current_counter)
         counter_dict[domain_num] = current_counter
