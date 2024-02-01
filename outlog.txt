@@ -1,0 +1,145 @@
+/home/shang/Desktop/FIXR_Public
+Loaded pretrained weights for efficientnet-b0
+
+
+Training on GPU no:  cuda:0
+GPU Name:  NVIDIA GeForce RTX 4090
+====================================================================================================
+{
+    "seed": null,
+    "notes": "NOTES",
+    "non_verbose": false,
+    "csv_log": true,
+    "tensorboard": false,
+    "validation": false,
+    "in_dir": null,
+    "out_dir": null,
+    "ckpt_dir": null,
+    "dataset": "ravdess",
+    "model": "fixr",
+    "lr": 0.01,
+    "optim_wd": 0.0,
+    "optim_mom": 0.0,
+    "optim_nesterov": 0,
+    "n_epochs": 10,
+    "batch_size": 32,
+    "backbone": false,
+    "gpu": 0,
+    "save_ckpt": false,
+    "plot_eval": false,
+    "usewandb": false,
+    "wandb_exp": "DER_exp",
+    "wandb_project": "DERmeetsDAN",
+    "domain_id": "1,2",
+    "buffer_size": 10,
+    "minibatch_size": 32,
+    "alpha": 1.0,
+    "conf_jobnum": "8561effd-55a0-4bb1-95e9-4db2a3ba328a",
+    "conf_timestamp": "2024-01-15 12:12:08.256381",
+    "conf_host": "Home-Lab"
+}
+====================================================================================================
+=========================================================================================================
+Layer (type:depth-idx)                                  Output Shape              Param #
+=========================================================================================================
+Fixr                                                    [32, 6]                   --
+├─EfficientNet: 1-1                                     [32, 6]                   --
+│    └─Conv2dStaticSamePadding: 2-1                     [32, 32, 112, 112]        864
+│    │    └─ZeroPad2d: 3-1                              [32, 3, 225, 225]         --
+│    └─BatchNorm2d: 2-2                                 [32, 32, 112, 112]        64
+│    └─MemoryEfficientSwish: 2-3                        [32, 32, 112, 112]        --
+│    └─ModuleList: 2-4                                  --                        --
+│    │    └─MBConvBlock: 3-2                            [32, 16, 112, 112]        1,448
+│    │    └─MBConvBlock: 3-3                            [32, 24, 56, 56]          6,004
+│    │    └─MBConvBlock: 3-4                            [32, 24, 56, 56]          10,710
+│    │    └─MBConvBlock: 3-5                            [32, 40, 28, 28]          15,350
+│    │    └─MBConvBlock: 3-6                            [32, 40, 28, 28]          31,290
+│    │    └─MBConvBlock: 3-7                            [32, 80, 14, 14]          37,130
+│    │    └─MBConvBlock: 3-8                            [32, 80, 14, 14]          102,900
+│    │    └─MBConvBlock: 3-9                            [32, 80, 14, 14]          102,900
+│    │    └─MBConvBlock: 3-10                           [32, 112, 14, 14]         126,004
+│    │    └─MBConvBlock: 3-11                           [32, 112, 14, 14]         208,572
+│    │    └─MBConvBlock: 3-12                           [32, 112, 14, 14]         208,572
+│    │    └─MBConvBlock: 3-13                           [32, 192, 7, 7]           262,492
+│    │    └─MBConvBlock: 3-14                           [32, 192, 7, 7]           587,952
+│    │    └─MBConvBlock: 3-15                           [32, 192, 7, 7]           587,952
+│    │    └─MBConvBlock: 3-16                           [32, 192, 7, 7]           587,952
+│    │    └─MBConvBlock: 3-17                           [32, 320, 7, 7]           717,232
+│    └─Conv2dStaticSamePadding: 2-5                     [32, 1280, 7, 7]          409,600
+│    │    └─Identity: 3-18                              [32, 320, 7, 7]           --
+│    └─BatchNorm2d: 2-6                                 [32, 1280, 7, 7]          2,560
+│    └─MemoryEfficientSwish: 2-7                        [32, 1280, 7, 7]          --
+│    └─AdaptiveAvgPool2d: 2-8                           [32, 1280, 1, 1]          --
+│    └─Linear: 2-9                                      [32, 512]                 655,872
+│    └─Dropout: 2-10                                    [32, 512]                 --
+│    └─Linear: 2-11                                     [32, 6]                   3,078
+=========================================================================================================
+Total params: 4,666,498
+Trainable params: 4,666,498
+Non-trainable params: 0
+Total mult-adds (M): 22.43
+=========================================================================================================
+Input size (MB): 19.27
+Forward/backward pass size (MB): 1724.98
+Params size (MB): 2.80
+Estimated Total Size (MB): 1747.05
+=========================================================================================================
+Performing Domain Incremental Learning in Domains with classes 6: ['1', '2']
+
+data/RAVDESS/train/1
+Ravdess: Domain 1: 'train'-dataset consisting of 916 samples of size 112
+data/RAVDESS/val/1
+Ravdess: Domain 1: 'val'-dataset consisting of 193 samples of size 112
+data/RAVDESS/train/2
+Ravdess: Domain 2: 'train'-dataset consisting of 927 samples of size 112
+data/RAVDESS/val/2
+Ravdess: Domain 2: 'val'-dataset consisting of 196 samples of size 112
+====================================================================================================
+
+Random Evaluation on one of the domain!!!
+
+Train on Domain 02 - Test Accuracy on Domain 01: 14.58%
+
+Train on Domain 02 - Test Accuracy on Domain 02: 11.46%
+Domain ID:  1
+data/RAVDESS/train/1
+Ravdess: Domain 1: 'train'-dataset consisting of 916 samples of size 112
+data/RAVDESS/val/1
+Ravdess: Domain 1: 'val'-dataset consisting of 193 samples of size 112
+[ 01-15 | 12:12 ] Task 1 | epoch 0: |██████████████████████████████████████████████████| training loss: 1.66 |training accuracy: 67.86
+Train on Domain 01 - Test Accuracy on Domain 01: 25.0%
+
+Accuracy for 1 task(s): 0.0 %
+[ 01-15 | 12:12 ] Task 1 | epoch 5: |██████████████████████████████████████████████████| training loss: 0.99 |training accuracy: 92.867
+Train on Domain 01 - Test Accuracy on Domain 01: 84.38%
+
+Accuracy for 1 task(s): 0.0 %
+[ 01-15 | 12:12 ] Task 1 | epoch 9: |██████████████████████████████████████████████████| training loss: 0.54 |training accuracy: 103.57
+Train on Domain 01 - Test Accuracy on Domain 01: 86.46%
+
+Accuracy for 1 task(s): 0.0 %
+------------------------------
+Domain ID:  2
+data/RAVDESS/train/2
+Ravdess: Domain 2: 'train'-dataset consisting of 927 samples of size 112
+data/RAVDESS/val/2
+Ravdess: Domain 2: 'val'-dataset consisting of 196 samples of size 112
+[ 01-15 | 12:12 ] Task 2 | epoch 0: |██████████████████████████████████████████████████| training loss: 0.91 |training accuracy: 100.0
+Train on Domain 02 - Test Accuracy on Domain 01: 82.81%
+
+Train on Domain 02 - Test Accuracy on Domain 02: 50.0%
+
+Accuracy for 2 task(s): 0.0 %
+[ 01-15 | 12:12 ] Task 2 | epoch 5: |██████████████████████████████████████████████████| training loss: 0.37 |training accuracy: 107.14
+Train on Domain 02 - Test Accuracy on Domain 01: 79.17%
+
+Train on Domain 02 - Test Accuracy on Domain 02: 85.42%
+
+Accuracy for 2 task(s): 0.0 %
+[ 01-15 | 12:12 ] Task 2 | epoch 9: |██████████████████████████████████████████████████| training loss: 0.21 |training accuracy: 110.71
+Train on Domain 02 - Test Accuracy on Domain 01: 67.19%
+
+Train on Domain 02 - Test Accuracy on Domain 02: 86.46%
+
+Accuracy for 2 task(s): 0.0 %
+------------------------------
