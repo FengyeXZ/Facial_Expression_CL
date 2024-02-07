@@ -49,9 +49,9 @@ def split_and_rename_data(source_folder, train_folder, test_folder, val_folder, 
 
 # 主要配置
 source_folder = 'expData-processed'  # 原始数据集目录
-train_folder = 'dataset/train'  # 训练集目录
-test_folder = 'dataset/test'  # 测试集目录
-val_folder = 'dataset/val'  # 验证集目录
+train_folder = 'data/train'  # 训练集目录
+test_folder = 'data/test'  # 测试集目录
+val_folder = 'data/val'  # 验证集目录
 
 # 执行数据集分割和重命名
 split_and_rename_data(source_folder, train_folder, test_folder, val_folder)
