@@ -42,7 +42,6 @@ test_data = ImageFolder(root='data/RAVDESS/test/' + actor, transform=data_transf
 # val_data = MyRAVDESS(domain_id=1, data_type='val')
 # test_data = MyRAVDESS(domain_id=1, data_type='test')
 
-
 train_loader = DataLoader(train_data, batch_size=64, shuffle=True)
 val_loader = DataLoader(val_data, batch_size=32, shuffle=False)
 test_loader = DataLoader(test_data, batch_size=32, shuffle=False)
@@ -58,6 +57,17 @@ train_loader2 = DataLoader(train_data2, batch_size=64, shuffle=True)
 val_loader2 = DataLoader(val_data2, batch_size=64, shuffle=False)
 test_loader2 = DataLoader(test_data2, batch_size=64, shuffle=False)
 
+train_data3 = ImageFolder(root='data/RAVDESS/train/03', transform=train_transforms)
+val_data3 = ImageFolder(root='data/RAVDESS/val/03', transform=data_transforms)
+test_data3 = ImageFolder(root='data/RAVDESS/test/03', transform=data_transforms)
+# train_data2 = MyRAVDESS(domain_id=2, data_type='train')
+# val_data2 = MyRAVDESS(domain_id=2, data_type='val')
+# test_data2 = MyRAVDESS(domain_id=2, data_type='test')
+
+train_loader3 = DataLoader(train_data3, batch_size=64, shuffle=True)
+val_loader3 = DataLoader(val_data3, batch_size=64, shuffle=False)
+test_loader3 = DataLoader(test_data3, batch_size=64, shuffle=False)
+
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 model.to(device)
 
@@ -65,7 +75,7 @@ criterion = nn.CrossEntropyLoss()
 optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
 
 # Define a simple buffer
-buffer_size = 32
+buffer_size = 64
 buffer = Buffer(buffer_size, device)
 
 
@@ -148,7 +158,7 @@ def train_with_replay(train_set, val_set, buffer, epochs=10):
 
             # 从缓冲区中抽取数据进行重播
             if not buffer.is_empty():
-                replay_inputs, replay_labels = buffer.get_data(size=16)
+                replay_inputs, replay_labels = buffer.get_data(size=32)
                 replay_inputs, replay_labels = replay_inputs.to(device), replay_labels.to(device)
                 replay_outputs = model(replay_inputs)
                 replay_loss = criterion(replay_outputs, replay_labels)
@@ -168,17 +178,48 @@ def train_with_replay(train_set, val_set, buffer, epochs=10):
         print(f"Accuracy on validation set: {acc_eval(val_set)}%")
 
 
-print(f"Accuracy on test set1(before training): {acc_eval(test_loader)}%")
-print(f"Accuracy on test set2(before training): {acc_eval(test_loader2)}%")
+acc1 = acc_eval(test_loader)
+acc2 = acc_eval(test_loader2)
+acc3 = acc_eval(test_loader3)
+print(f"Accuracy on test set1(before training): {acc1}%")
+print(f"Accuracy on test set2(before training): {acc2}%")
+print(f"Accuracy on test set3(before training): {acc3}%")
 
 # model_train(train_loader, val_loader)
 train_with_replay(train_loader, val_loader, buffer)
 
-print(f"Accuracy on test set1: {acc_eval(test_loader)}%")
-print(f"Accuracy on test set2: {acc_eval(test_loader2)}%")
+acc1new = acc_eval(test_loader)
+acc2new = acc_eval(test_loader2)
+acc3new = acc_eval(test_loader3)
+def1 = acc1new - acc1
+def2 = acc2new - acc2
+def3 = acc3new - acc3
+print(f"Accuracy on test set1: {acc1new}%", f"Change: {def1}%")
+print(f"Accuracy on test set2: {acc2new}%", f"Change: {def2}%")
+print(f"Accuracy on test set3: {acc3new}%", f"Change: {def3}%")
 
 # model_train(train_loader2, val_loader2)
 train_with_replay(train_loader2, val_loader2, buffer)
 
-print(f"Accuracy on test set1: {acc_eval(test_loader)}%")
-print(f"Accuracy on test set2: {acc_eval(test_loader2)}%")
+acc1 = acc_eval(test_loader)
+acc2 = acc_eval(test_loader2)
+acc3 = acc_eval(test_loader3)
+def1 = acc1 - acc1new
+def2 = acc2 - acc2new
+def3 = acc3 - acc3new
+print(f"Accuracy on test set1: {acc1}%", f"Change: {def1}%")
+print(f"Accuracy on test set2: {acc2}%", f"Change: {def2}%")
+print(f"Accuracy on test set3: {acc3}%", f"Change: {def3}%")
+
+# model_train(train_loader3, val_loader3)
+train_with_replay(train_loader3, val_loader3, buffer)
+
+acc1new = acc_eval(test_loader)
+acc2new = acc_eval(test_loader2)
+acc3new = acc_eval(test_loader3)
+def1 = acc1new - acc1
+def2 = acc2new - acc2
+def3 = acc3new - acc3
+print(f"Accuracy on test set1: {acc1new}%", f"Change: {def1}%")
+print(f"Accuracy on test set2: {acc2new}%", f"Change: {def2}%")
+print(f"Accuracy on test set3: {acc3new}%", f"Change: {def3}%")
