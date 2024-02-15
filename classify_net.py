@@ -35,34 +35,34 @@ train_transforms = transforms.Compose([
 
 actor = '01'
 
-train_data = ImageFolder(root='data/RAVDESS/train/' + actor, transform=train_transforms)
-val_data = ImageFolder(root='data/RAVDESS/val/' + actor, transform=data_transforms)
-test_data = ImageFolder(root='data/RAVDESS/test/' + actor, transform=data_transforms)
-# train_data = MyRAVDESS(domain_id=1, data_type='train')
-# val_data = MyRAVDESS(domain_id=1, data_type='val')
-# test_data = MyRAVDESS(domain_id=1, data_type='test')
+# train_data = ImageFolder(root='data/RAVDESS/train/' + actor, transform=train_transforms)
+# val_data = ImageFolder(root='data/RAVDESS/val/' + actor, transform=data_transforms)
+# test_data = ImageFolder(root='data/RAVDESS/test/' + actor, transform=data_transforms)
+train_data = MyRAVDESS(domain_id=1, data_type='train')
+val_data = MyRAVDESS(domain_id=1, data_type='val')
+test_data = MyRAVDESS(domain_id=1, data_type='test')
 
 train_loader = DataLoader(train_data, batch_size=64, shuffle=True)
 val_loader = DataLoader(val_data, batch_size=32, shuffle=False)
 test_loader = DataLoader(test_data, batch_size=32, shuffle=False)
 
-train_data2 = ImageFolder(root='data/RAVDESS/train/02', transform=train_transforms)
-val_data2 = ImageFolder(root='data/RAVDESS/val/02', transform=data_transforms)
-test_data2 = ImageFolder(root='data/RAVDESS/test/02', transform=data_transforms)
-# train_data2 = MyRAVDESS(domain_id=2, data_type='train')
-# val_data2 = MyRAVDESS(domain_id=2, data_type='val')
-# test_data2 = MyRAVDESS(domain_id=2, data_type='test')
+# train_data2 = ImageFolder(root='data/RAVDESS/train/02', transform=train_transforms)
+# val_data2 = ImageFolder(root='data/RAVDESS/val/02', transform=data_transforms)
+# test_data2 = ImageFolder(root='data/RAVDESS/test/02', transform=data_transforms)
+train_data2 = MyRAVDESS(domain_id=2, data_type='train')
+val_data2 = MyRAVDESS(domain_id=2, data_type='val')
+test_data2 = MyRAVDESS(domain_id=2, data_type='test')
 
 train_loader2 = DataLoader(train_data2, batch_size=64, shuffle=True)
 val_loader2 = DataLoader(val_data2, batch_size=64, shuffle=False)
 test_loader2 = DataLoader(test_data2, batch_size=64, shuffle=False)
 
-train_data3 = ImageFolder(root='data/RAVDESS/train/03', transform=train_transforms)
-val_data3 = ImageFolder(root='data/RAVDESS/val/03', transform=data_transforms)
-test_data3 = ImageFolder(root='data/RAVDESS/test/03', transform=data_transforms)
-# train_data2 = MyRAVDESS(domain_id=2, data_type='train')
-# val_data2 = MyRAVDESS(domain_id=2, data_type='val')
-# test_data2 = MyRAVDESS(domain_id=2, data_type='test')
+# train_data3 = ImageFolder(root='data/RAVDESS/train/03', transform=train_transforms)
+# val_data3 = ImageFolder(root='data/RAVDESS/val/03', transform=data_transforms)
+# test_data3 = ImageFolder(root='data/RAVDESS/test/03', transform=data_transforms)
+train_data3 = MyRAVDESS(domain_id=3, data_type='train')
+val_data3 = MyRAVDESS(domain_id=3, data_type='val')
+test_data3 = MyRAVDESS(domain_id=3, data_type='test')
 
 train_loader3 = DataLoader(train_data3, batch_size=64, shuffle=True)
 val_loader3 = DataLoader(val_data3, batch_size=64, shuffle=False)
@@ -108,7 +108,7 @@ def acc_eval(test_set):
     correct = 0
     total = 0
     with torch.no_grad():
-        for inputs, labels in test_set:
+        for inputs, labels, original in test_set:
             inputs, labels = inputs.to(device), labels.to(device)
             outputs = model(inputs)
             _, predicted = torch.max(outputs.data, 1)
@@ -148,7 +148,7 @@ def train_with_replay(train_set, val_set, buffer, epochs=10):
         model.train()
         running_loss = 0.0
 
-        for inputs, labels in train_set:
+        for inputs, labels, original in train_set:
             inputs, labels = inputs.to(device), labels.to(device)
             optimizer.zero_grad()
 
@@ -158,7 +158,7 @@ def train_with_replay(train_set, val_set, buffer, epochs=10):
 
             # 从缓冲区中抽取数据进行重播
             if not buffer.is_empty():
-                replay_inputs, replay_labels = buffer.get_data(size=32)
+                replay_inputs, replay_labels = buffer.get_data(size=16)
                 replay_inputs, replay_labels = replay_inputs.to(device), replay_labels.to(device)
                 replay_outputs = model(replay_inputs)
                 replay_loss = criterion(replay_outputs, replay_labels)
@@ -169,7 +169,7 @@ def train_with_replay(train_set, val_set, buffer, epochs=10):
 
             running_loss += loss.item()
 
-            buffer.add_data(inputs, labels)  # 将当前数据添加到缓冲区
+            buffer.add_data(original, labels)  # 将当前数据添加到缓冲区
 
         print(f"Epoch {epoch + 1}, Loss: {running_loss / len(train_set)}")
 

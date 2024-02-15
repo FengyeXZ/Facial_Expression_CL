@@ -20,8 +20,10 @@ def file_moving(input_path: str, output_path: str, start_num: int):
 
 def file_classifier(input_path: str, output_path: str, emotions: dict, target_emo_num: int):
     counter_dict = {}
+    print(os.listdir(input_path))
     for domain in tqdm(os.listdir(input_path), desc=f'Processing {emotions[target_emo_num]}'):
         domain_num = int(domain[-2:])
+        # print(domain_num)
         if domain_num not in counter_dict.keys():
             counter = 1
             counter_dict[domain_num] = counter
@@ -35,7 +37,7 @@ def file_classifier(input_path: str, output_path: str, emotions: dict, target_em
             if emotion_num == target_emo_num:
                 emotion_name = emotions[emotion_num]
                 current_counter = file_moving(os.path.join(image_path, emotion_folder), os.path.join(output_path,
-                                                                                                     str(domain_num),
+                                                                                                     f'{domain_num:02}',
                                                                                                      emotion_name),
                                               current_counter)
         counter_dict[domain_num] = current_counter
@@ -43,8 +45,8 @@ def file_classifier(input_path: str, output_path: str, emotions: dict, target_em
 
 def main():
     target_emotions = {5: 'angry', 7: 'disgust', 6: 'fear', 3: 'happy', 4: 'sad', 8: 'surprise'}
-    source_path = '/media/shang/My Passport/Dataset_Frames_processed'
-    target_path = 'expData-processed'
+    source_path = 'dataTmp/Dataset_Frames_processed'
+    target_path = 'dataTmp/expData-processed'
     if not os.path.exists(target_path):
         os.makedirs(target_path)
 
