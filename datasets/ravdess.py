@@ -1,20 +1,39 @@
 # Based on https://github.com/rahullabs/FIXR_Public.git
 # This code if for the RAVDESS data
 import os
-from argparse import Namespace
 from typing import Tuple
 from PIL import Image
 from torch import nn as nn
-from torch.utils.data import Dataset
+from torch.utils.data import Dataset, DataLoader
 from torchvision import transforms
 from datasets.transforms.denormalization import DeNormalize
 from torchvision.datasets import ImageFolder
 from datasets.utils.continual_dataset import ContinualDataset
 
 
+def store_ravdess_dataset(domain_id, transform,  setting):
+    train_dataset = MyRAVDESS(domain_id, verbose=True)
+    test_dataset = MyRAVDESS(domain_id=domain_id, data_type='val', verbose=True)
+    train_loader = DataLoader(train_dataset,
+                              batch_size=setting.args.batch_size, shuffle=True, drop_last=True)
+    test_loader = DataLoader(test_dataset,
+                             batch_size=setting.args.batch_size, shuffle=False, drop_last=True)
+    setting.test_loaders.append(test_loader)
+    setting.train_loader = train_loader
+    return train_loader, test_loader
+
+
+def store_test_ravdess_dataset(domain_id, setting):
+    test_dataset = MyRAVDESS(domain_id=domain_id, data_type='val', verbose=True)
+    test_loader = DataLoader(test_dataset,
+                             batch_size=setting.args.batch_size, shuffle=False)
+    setting.test_loader = test_loader
+    return test_loader
+
+
 class MyRAVDESS(Dataset):
     def __init__(self, domain_id: int, root='data/RAVDESS', data_type='train', img_size=112, transform=None,
-                 target_transform=None) -> None:
+                 target_transform=None, verbose=False) -> None:
         self.data_path = os.path.join(root, str(data_type), str(domain_id).zfill(2))
         self.img_size = img_size
         self.data_type = data_type
@@ -80,7 +99,7 @@ class RAVDESS(ContinualDataset):
     IMG_SIZE = 112
     IMG_RESIZE = 128
     TRANSFORM = transforms.Compose([
-        transforms.Resize(IMG_SIZE),
+        transforms.Resize(IMG_RESIZE),
         transforms.RandomCrop(IMG_SIZE, padding=4),
         transforms.RandomHorizontalFlip(),
         transforms.ToTensor(),
@@ -88,10 +107,25 @@ class RAVDESS(ContinualDataset):
     ])
 
     def get_nonperm_data_loaders(self):
-        pass
+        transform = transforms.Compose((transforms.ToTensor(),))
+        train, test = store_ravdess_dataset(1, transform, self)
+        return train, test
 
-    def get_data_loaders(self):
-        pass
+    def data_loader_with_did(self, did):
+        domain_id = self.get_did(domain_id=did)
+        transform = transforms.Compose((transforms.ToTensor(),))
+        train, test = store_ravdess_dataset(domain_id, transform, self)
+        return train, test
+
+    def test_data_loader_with_did(self, did):
+        domain_id = self.get_did(domain_id=did)
+        transform = transforms.Compose((transforms.ToTensor(),))
+        test = store_test_ravdess_dataset(domain_id, self)
+        return test
+
+    def get_did(self, domain_id):
+        DOMAIN_ID = domain_id
+        return DOMAIN_ID
 
     @staticmethod
     def get_backbone():
@@ -122,7 +156,7 @@ class RAVDESS(ContinualDataset):
 
 
 def main():
-    r = RAVDESS(verbose=True)
+    r = MyRAVDESS(verbose=True, domain_id=1)
 
 
 if __name__ == '__main__':
