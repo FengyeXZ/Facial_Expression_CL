@@ -33,14 +33,14 @@ train_transforms = transforms.Compose([
     transforms.Normalize([0.6740, 0.4463, 0.3831], [0.2017, 0.1714, 0.1607])
 ])
 
-actor = '01'
+actor = '04'
 
 # train_data = ImageFolder(root='data/RAVDESS/train/' + actor, transform=train_transforms)
 # val_data = ImageFolder(root='data/RAVDESS/val/' + actor, transform=data_transforms)
 # test_data = ImageFolder(root='data/RAVDESS/test/' + actor, transform=data_transforms)
-train_data = MyRAVDESS(domain_id=1, data_type='train')
-val_data = MyRAVDESS(domain_id=1, data_type='val')
-test_data = MyRAVDESS(domain_id=1, data_type='test')
+train_data = MyRAVDESS(domain_id=2, data_type='train')
+val_data = MyRAVDESS(domain_id=2, data_type='val')
+test_data = MyRAVDESS(domain_id=2, data_type='test')
 
 train_loader = DataLoader(train_data, batch_size=64, shuffle=True)
 val_loader = DataLoader(val_data, batch_size=32, shuffle=False)
@@ -49,9 +49,9 @@ test_loader = DataLoader(test_data, batch_size=32, shuffle=False)
 # train_data2 = ImageFolder(root='data/RAVDESS/train/02', transform=train_transforms)
 # val_data2 = ImageFolder(root='data/RAVDESS/val/02', transform=data_transforms)
 # test_data2 = ImageFolder(root='data/RAVDESS/test/02', transform=data_transforms)
-train_data2 = MyRAVDESS(domain_id=2, data_type='train')
-val_data2 = MyRAVDESS(domain_id=2, data_type='val')
-test_data2 = MyRAVDESS(domain_id=2, data_type='test')
+train_data2 = MyRAVDESS(domain_id=4, data_type='train')
+val_data2 = MyRAVDESS(domain_id=4, data_type='val')
+test_data2 = MyRAVDESS(domain_id=4, data_type='test')
 
 train_loader2 = DataLoader(train_data2, batch_size=64, shuffle=True)
 val_loader2 = DataLoader(val_data2, batch_size=64, shuffle=False)
@@ -69,6 +69,7 @@ val_loader3 = DataLoader(val_data3, batch_size=64, shuffle=False)
 test_loader3 = DataLoader(test_data3, batch_size=64, shuffle=False)
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+# device = torch.device("mps")
 model.to(device)
 
 criterion = nn.CrossEntropyLoss()

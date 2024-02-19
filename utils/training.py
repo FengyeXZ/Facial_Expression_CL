@@ -11,7 +11,7 @@ from typing import Tuple
 import torch
 from datasets import get_dataset
 from datasets.utils.continual_dataset import ContinualDataset
-from models.utils.continual_model import ContinualModel
+from model.utils.continual_model import ContinualModel
 
 from utils.loggers import *
 from utils.status import ProgressBar
@@ -20,6 +20,7 @@ try:
     import wandb
 except ImportError:
     wandb = None
+
 
 def mask_classes(outputs: torch.Tensor, dataset: ContinualDataset, k: int) -> None:
     """
