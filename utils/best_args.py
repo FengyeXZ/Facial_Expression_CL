@@ -1,8 +1,4 @@
-# Copyright 2022-present, Lorenzo Bonicelli, Pietro Buzzega, Matteo Boschini, Angelo Porrello, Simone Calderara.
-# All rights reserved.
-# This source code is licensed under the license found in the
-# LICENSE file in the root directory of this source tree.
-
+# Based on https://github.com/aimagelab/mammoth
 best_args = {
     'perm-mnist': {
     'sgd': {-1: {'lr': 0.2, 'batch_size': 128, 'n_epochs': 1}},

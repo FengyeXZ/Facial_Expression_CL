@@ -1,5 +1,4 @@
-# Based on https://github.com/rahullabs/FIXR_Public.git
-# This code if for the RAVDESS data
+# This code if for the MEAD data
 import os
 from typing import Tuple
 from PIL import Image
@@ -14,9 +13,9 @@ from backbone.DeepModels import efficientnet_b0, resnet_50
 from utils.center_loss import CenterLoss
 
 
-def store_ravdess_dataset(domain_id, transform,  setting):
-    train_dataset = MyRAVDESS(domain_id, verbose=True)
-    test_dataset = MyRAVDESS(domain_id=domain_id, data_type='val', verbose=True)
+def store_mead_dataset(domain_id, transform, setting):
+    train_dataset = MyMEAD(domain_id, verbose=True)
+    test_dataset = MyMEAD(domain_id=domain_id, data_type='val', verbose=True)
 
     train_loader = DataLoader(train_dataset, batch_size=setting.args.batch_size, shuffle=True, drop_last=True)
     test_loader = DataLoader(test_dataset, batch_size=setting.args.batch_size, shuffle=False, drop_last=True)
@@ -26,8 +25,8 @@ def store_ravdess_dataset(domain_id, transform,  setting):
     return train_loader, test_loader
 
 
-def store_test_ravdess_dataset(domain_id, setting):
-    test_dataset = MyRAVDESS(domain_id=domain_id, data_type='val', verbose=True)
+def store_test_mead_dataset(domain_id, setting):
+    test_dataset = MyMEAD(domain_id=domain_id, data_type='val', verbose=True)
 
     test_loader = DataLoader(test_dataset, batch_size=setting.args.batch_size, shuffle=False)
 
@@ -35,8 +34,8 @@ def store_test_ravdess_dataset(domain_id, setting):
     return test_loader
 
 
-class MyRAVDESS(Dataset):
-    def __init__(self, domain_id: int, root='data/RAVDESS', data_type='train', img_size=112, transform=None,
+class MyMEAD(Dataset):
+    def __init__(self, domain_id: int, root='data/MEAD', data_type='train', img_size=112, transform=None,
                  target_transform=None, verbose=False) -> None:
         self.data_path = os.path.join(root, str(data_type), str(domain_id).zfill(2))
         self.img_size = img_size
@@ -94,7 +93,7 @@ class MyRAVDESS(Dataset):
         return self.dataset.class_to_idx
 
 
-class RAVDESS(ContinualDataset):
+class MEAD(ContinualDataset):
     NAME = 'ravdess'
     SETTING = 'domain-il'
     N_CLASSES_PER_TASK = 6
@@ -112,19 +111,19 @@ class RAVDESS(ContinualDataset):
 
     def get_nonperm_data_loaders(self):
         transform = transforms.Compose((transforms.ToTensor(),))
-        train, test = store_ravdess_dataset(1, transform, self)
+        train, test = store_mead_dataset(1, transform, self)
         return train, test
 
     def data_loader_with_did(self, did):
         domain_id = self.get_did(domain_id=did)
         transform = transforms.Compose((transforms.ToTensor(),))
-        train, test = store_ravdess_dataset(domain_id, transform, self)
+        train, test = store_mead_dataset(domain_id, transform, self)
         return train, test
 
     def test_data_loader_with_did(self, did):
         domain_id = self.get_did(domain_id=did)
         transform = transforms.Compose((transforms.ToTensor(),))
-        test = store_test_ravdess_dataset(domain_id, self)
+        test = store_test_mead_dataset(domain_id, self)
         return test
 
     def get_did(self, domain_id):
@@ -133,7 +132,7 @@ class RAVDESS(ContinualDataset):
 
     @staticmethod
     def get_backbone(args=None):
-        return mammoth_efficientnet(RAVDESS.N_CLASSES_PER_TASK, model_name="efficientnet-b0", pretrained=True)
+        return mammoth_efficientnet(MEAD.N_CLASSES_PER_TASK, model_name="efficientnet-b0", pretrained=True)
         # return efficientnet_b0(RAVDESS.N_CLASSES_PER_TASK)
         # return resnet_50(RAVDESS.N_CLASSES_PER_TASK)
 
@@ -141,7 +140,7 @@ class RAVDESS(ContinualDataset):
     def get_transform():
         return transforms.Compose([
             transforms.ToPILImage(),
-            RAVDESS.TRANSFORM
+            MEAD.TRANSFORM
         ])
 
     @staticmethod
@@ -154,15 +153,15 @@ class RAVDESS(ContinualDataset):
 
     @staticmethod
     def get_normalization_transform():
-        return transforms.Normalize(RAVDESS.MEAN, RAVDESS.STD)
+        return transforms.Normalize(MEAD.MEAN, MEAD.STD)
 
     @staticmethod
     def get_denormalization_transform():
-        return DeNormalize(RAVDESS.MEAN, RAVDESS.STD)
+        return DeNormalize(MEAD.MEAN, MEAD.STD)
 
 
 def main():
-    r = RAVDESS(verbose=True)
+    r = MEAD(verbose=True)
 
 
 if __name__ == '__main__':

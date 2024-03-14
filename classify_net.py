@@ -8,16 +8,21 @@ from torch.utils.data import DataLoader
 from datasets.ravdess import MyRAVDESS
 from utils.buffer import Buffer
 from PIL import Image
-
+from backbone.EfficientNet import mammoth_efficientnet
+from utils.center_loss import CenterLoss
+import random
 
 # 该区域定义model 后续建立model文件调用
-model = models.efficientnet_b0(weights=EfficientNet_B0_Weights.IMAGENET1K_V1)
+model = mammoth_efficientnet(6, model_name="efficientnet-b0", pretrained=True)
+# model = models.efficientnet_b0(weights=EfficientNet_B0_Weights.IMAGENET1K_V1)
+# model = models.resnet50(pretrained=True)
 
-num_classes = 6  # Number of classes in the data(emotion)
-model.classifier = nn.Sequential(
-    nn.Dropout(0.2),
-    nn.Linear(model.classifier[1].in_features, num_classes)
-)
+# num_classes = 6  # Number of classes in the data(emotion)
+# model.classifier = nn.Sequential(
+#     nn.Dropout(0.2),
+#     nn.Linear(model.classifier[1].in_features, num_classes)
+# )
+# model.fc = nn.Linear(model.fc.in_features, num_classes)
 
 data_transforms = transforms.Compose([
     transforms.Resize((112, 112)),
@@ -43,8 +48,8 @@ val_data = MyRAVDESS(domain_id=2, data_type='val')
 test_data = MyRAVDESS(domain_id=2, data_type='test')
 
 train_loader = DataLoader(train_data, batch_size=64, shuffle=True)
-val_loader = DataLoader(val_data, batch_size=32, shuffle=False)
-test_loader = DataLoader(test_data, batch_size=32, shuffle=False)
+val_loader = DataLoader(val_data, batch_size=64, shuffle=False)
+test_loader = DataLoader(test_data, batch_size=64, shuffle=False)
 
 # train_data2 = ImageFolder(root='data/RAVDESS/train/02', transform=train_transforms)
 # val_data2 = ImageFolder(root='data/RAVDESS/val/02', transform=data_transforms)
@@ -73,7 +78,10 @@ device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 model.to(device)
 
 criterion = nn.CrossEntropyLoss()
-optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
+center_loss = CenterLoss(num_classes=6, feat_dim=1280, use_gpu=True)
+# params = list(model.parameters()) + list(center_loss.parameters())
+optimizer = torch.optim.SGD(model.parameters(), lr=0.01)
+optimizer_centloss = torch.optim.SGD(center_loss.parameters(), lr=0.5)
 
 # Define a simple buffer
 buffer_size = 64
@@ -130,9 +138,13 @@ def model_train(train_set, val_set, epochs=10):
 
             optimizer.zero_grad()
 
-            outputs = model(inputs)
+            outputs, features = model(inputs, returnt='all')
+            print(features.shape)
             loss = criterion(outputs, labels)
             loss.backward()
+            # for param in criterion.parameters():
+            #     # lr_cent is learning rate for center loss, e.g. lr_cent = 0.5
+            #     param.grad.data *= (0.5 / 0.01)
             optimizer.step()
 
             running_loss += loss.item()
@@ -144,33 +156,55 @@ def model_train(train_set, val_set, epochs=10):
         print(f"Accuracy on validation set: {acc_eval(val_set)}%")
 
 
-def train_with_replay(train_set, val_set, buffer, epochs=10):
+prob = 1
+
+
+def train_with_replay(train_set, val_set, buffer, epochs=30):
+    global prob
     for epoch in range(epochs):
         model.train()
         running_loss = 0.0
 
         for inputs, labels, original in train_set:
             inputs, labels = inputs.to(device), labels.to(device)
-            optimizer.zero_grad()
-
-            # 处理当前任务的数据
-            outputs = model(inputs)
-            loss = criterion(outputs, labels)
-
+            mix_inputs = inputs
+            mix_labels = labels
             # 从缓冲区中抽取数据进行重播
             if not buffer.is_empty():
-                replay_inputs, replay_labels = buffer.get_data(size=16)
-                replay_inputs, replay_labels = replay_inputs.to(device), replay_labels.to(device)
-                replay_outputs = model(replay_inputs)
-                replay_loss = criterion(replay_outputs, replay_labels)
-                loss += replay_loss  # 结合当前数据和重播数据的损失
+                replay_inputs, replay_labels = buffer.get_data(size=32)
+                mix_inputs = torch.cat((inputs, replay_inputs), 0)
+                mix_labels = torch.cat((labels, replay_labels), 0)
+
+            optimizer.zero_grad()
+            optimizer_centloss.zero_grad()
+
+            # 处理当前任务的数据
+            outputs, features = model(mix_inputs, returnt='all')
+            # print(features.shape)
+            loss = criterion(outputs, mix_labels)
+            # optimizer.zero_grad()
+            # optimizer_centloss.zero_grad()
+
+            # # 从缓冲区中抽取数据进行重播
+            # if not buffer.is_empty():
+            #     replay_inputs, replay_labels = buffer.get_data(size=16)
+            #     replay_inputs, replay_labels = replay_inputs.to(device), replay_labels.to(device)
+            #     replay_outputs, replay_features = model(replay_inputs, returnt='all')
+            #     replay_loss = criterion(replay_outputs, replay_labels) * 0.1
+            #     loss += replay_loss  # 结合当前数据和重播数据的损失
 
             loss.backward()
+            # for param in center_loss.parameters():
+            #     param.grad.data *= (1. / 0.1)
             optimizer.step()
+            # optimizer_centloss.step()
 
             running_loss += loss.item()
 
-            buffer.add_data(original, labels)  # 将当前数据添加到缓冲区
+            chance = random.random()
+            if chance < prob:
+                buffer.add_data(original, labels)  # 将当前数据添加到缓冲区
+            prob *= 0.99
 
         print(f"Epoch {epoch + 1}, Loss: {running_loss / len(train_set)}")
 

@@ -1,22 +1,24 @@
 # Based on https://github.com/aimagelab/mammoth
-
+from abc import abstractmethod
 from argparse import Namespace
+from torch import nn as nn
+from torchvision.transforms import transforms
+from torch.utils.data import DataLoader
 from typing import Tuple
-
+from torchvision import datasets
 import numpy as np
-import torch.nn as nn
 import torch.optim
-from torch.utils.data import DataLoader, Dataset
-
 
 class ContinualDataset:
     """
     Continual learning evaluation setting.
     """
-    NAME: str
-    SETTING: str
-    N_CLASSES_PER_TASK: int
-    N_TASKS: int
+    NAME = None
+    SETTING = None
+    N_CLASSES_PER_TASK = None
+    N_TASKS = None
+    TRANSFORM = None
+    USER_ID = None
 
     def __init__(self, args: Namespace) -> None:
         """
@@ -28,74 +30,79 @@ class ContinualDataset:
         self.i = 0
         self.args = args
 
-        if not all((self.NAME, self.SETTING, self.N_CLASSES_PER_TASK, self.N_TASKS)):
-            raise NotImplementedError('The dataset must be initialized with all the required fields.')
-
+    @abstractmethod
     def get_data_loaders(self) -> Tuple[DataLoader, DataLoader]:
         """
         Creates and returns the training and test loaders for the current task.
         The current training loader and all test loaders are stored in self.
         :return: the current training and test loaders
         """
-        raise NotImplementedError
+        pass
 
     @staticmethod
+    @abstractmethod
     def get_backbone() -> nn.Module:
         """
         Returns the backbone to be used for to the current dataset.
         """
-        raise NotImplementedError
+        pass
 
     @staticmethod
-    def get_transform() -> nn.Module:
+    @abstractmethod
+    def get_transform() -> transforms:
         """
         Returns the transform to be used for to the current dataset.
         """
-        raise NotImplementedError
+        pass
 
     @staticmethod
-    def get_loss() -> nn.Module:
+    @abstractmethod
+    def get_loss() -> nn.functional:
         """
         Returns the loss to be used for to the current dataset.
         """
-        raise NotImplementedError
+        pass
 
     @staticmethod
-    def get_normalization_transform() -> nn.Module:
+    @abstractmethod
+    def get_normalization_transform() -> transforms:
         """
         Returns the transform used for normalizing the current dataset.
         """
-        raise NotImplementedError
+        pass
 
     @staticmethod
-    def get_denormalization_transform() -> nn.Module:
+    @abstractmethod
+    def get_denormalization_transform() -> transforms:
         """
         Returns the transform used for denormalizing the current dataset.
         """
-        raise NotImplementedError
+        pass
 
     @staticmethod
-    def get_scheduler(model, args: Namespace) -> torch.optim.lr_scheduler._LRScheduler:
+    @abstractmethod
+    def get_scheduler(model, args: Namespace) -> torch.optim.lr_scheduler:
         """
         Returns the scheduler to be used for to the current dataset.
         """
-        raise NotImplementedError
+        pass
 
     @staticmethod
     def get_epochs():
-        raise NotImplementedError
+        pass
 
     @staticmethod
     def get_batch_size():
-        raise NotImplementedError
+        pass
 
     @staticmethod
     def get_minibatch_size():
-        raise NotImplementedError
+        pass
 
 
-def store_masked_loaders(train_dataset: Dataset, test_dataset: Dataset,
-                         setting: ContinualDataset) -> Tuple[DataLoader, DataLoader]:
+
+def store_masked_loaders(train_dataset: datasets, test_dataset: datasets,
+                    setting: ContinualDataset) -> Tuple[DataLoader, DataLoader]:
     """
     Divides the dataset into tasks.
     :param train_dataset: train dataset
@@ -103,10 +110,11 @@ def store_masked_loaders(train_dataset: Dataset, test_dataset: Dataset,
     :param setting: continual learning setting
     :return: train and test loaders
     """
+    print(train_dataset)
     train_mask = np.logical_and(np.array(train_dataset.targets) >= setting.i,
-                                np.array(train_dataset.targets) < setting.i + setting.N_CLASSES_PER_TASK)
+        np.array(train_dataset.targets) < setting.i + setting.N_CLASSES_PER_TASK)
     test_mask = np.logical_and(np.array(test_dataset.targets) >= setting.i,
-                               np.array(test_dataset.targets) < setting.i + setting.N_CLASSES_PER_TASK)
+        np.array(test_dataset.targets) < setting.i + setting.N_CLASSES_PER_TASK)
 
     train_dataset.data = train_dataset.data[train_mask]
     test_dataset.data = test_dataset.data[test_mask]
@@ -125,7 +133,7 @@ def store_masked_loaders(train_dataset: Dataset, test_dataset: Dataset,
     return train_loader, test_loader
 
 
-def get_previous_train_loader(train_dataset: Dataset, batch_size: int,
+def get_previous_train_loader(train_dataset: datasets, batch_size: int,
                               setting: ContinualDataset) -> DataLoader:
     """
     Creates a dataloader for the previous task.
@@ -135,8 +143,8 @@ def get_previous_train_loader(train_dataset: Dataset, batch_size: int,
     :return: a dataloader
     """
     train_mask = np.logical_and(np.array(train_dataset.targets) >=
-                                setting.i - setting.N_CLASSES_PER_TASK, np.array(train_dataset.targets)
-                                < setting.i - setting.N_CLASSES_PER_TASK + setting.N_CLASSES_PER_TASK)
+        setting.i - setting.N_CLASSES_PER_TASK, np.array(train_dataset.targets)
+        < setting.i - setting.N_CLASSES_PER_TASK + setting.N_CLASSES_PER_TASK)
 
     train_dataset.data = train_dataset.data[train_mask]
     train_dataset.targets = np.array(train_dataset.targets)[train_mask]

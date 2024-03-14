@@ -1,4 +1,4 @@
-# Based on https://github.com/rahullabs/FIXR_Public.git
+# Based on https://github.com/aimagelab/mammoth
 from utils.buffer import Buffer
 from torch.nn import functional as F
 from utils.args import *

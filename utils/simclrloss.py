@@ -1,9 +1,4 @@
-"""
-Author: Yonglong Tian (yonglong@mit.edu)
-Date: May 07, 2020
-Source: https://github.com/HobbitLong/SupContrast/blob/master/losses.py
-"""
-
+# Based on https://github.com/aimagelab/mammoth
 import torch
 import torch.nn as nn
 
