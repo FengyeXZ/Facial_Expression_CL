@@ -1,4 +1,5 @@
 # Based on https://github.com/aimagelab/mammoth
+# and https://github.com/rahullabs/FIXR_Public.git
 from abc import abstractmethod
 from argparse import Namespace
 from torch import nn as nn
@@ -8,6 +9,7 @@ from typing import Tuple
 from torchvision import datasets
 import numpy as np
 import torch.optim
+
 
 class ContinualDataset:
     """
@@ -100,9 +102,8 @@ class ContinualDataset:
         pass
 
 
-
 def store_masked_loaders(train_dataset: datasets, test_dataset: datasets,
-                    setting: ContinualDataset) -> Tuple[DataLoader, DataLoader]:
+                         setting: ContinualDataset) -> Tuple[DataLoader, DataLoader]:
     """
     Divides the dataset into tasks.
     :param train_dataset: train dataset
@@ -112,9 +113,9 @@ def store_masked_loaders(train_dataset: datasets, test_dataset: datasets,
     """
     print(train_dataset)
     train_mask = np.logical_and(np.array(train_dataset.targets) >= setting.i,
-        np.array(train_dataset.targets) < setting.i + setting.N_CLASSES_PER_TASK)
+                                np.array(train_dataset.targets) < setting.i + setting.N_CLASSES_PER_TASK)
     test_mask = np.logical_and(np.array(test_dataset.targets) >= setting.i,
-        np.array(test_dataset.targets) < setting.i + setting.N_CLASSES_PER_TASK)
+                               np.array(test_dataset.targets) < setting.i + setting.N_CLASSES_PER_TASK)
 
     train_dataset.data = train_dataset.data[train_mask]
     test_dataset.data = test_dataset.data[test_mask]
@@ -143,8 +144,8 @@ def get_previous_train_loader(train_dataset: datasets, batch_size: int,
     :return: a dataloader
     """
     train_mask = np.logical_and(np.array(train_dataset.targets) >=
-        setting.i - setting.N_CLASSES_PER_TASK, np.array(train_dataset.targets)
-        < setting.i - setting.N_CLASSES_PER_TASK + setting.N_CLASSES_PER_TASK)
+                                setting.i - setting.N_CLASSES_PER_TASK, np.array(train_dataset.targets)
+                                < setting.i - setting.N_CLASSES_PER_TASK + setting.N_CLASSES_PER_TASK)
 
     train_dataset.data = train_dataset.data[train_mask]
     train_dataset.targets = np.array(train_dataset.targets)[train_mask]

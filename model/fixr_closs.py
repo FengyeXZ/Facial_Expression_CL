@@ -17,12 +17,12 @@ def get_parser() -> ArgumentParser:
     return parser
 
 
-class Fixr(ContinualModel):
-    NAME = 'fixr'
+class FixrCloss(ContinualModel):
+    NAME = 'fixr_closs'
     COMPATIBILITY = ['domain-il']
 
     def __init__(self, backbone, loss, args, transform):
-        super(Fixr, self).__init__(backbone, loss, args, transform)
+        super(FixrCloss, self).__init__(backbone, loss, args, transform)
         self.buffer = Buffer(self.args.buffer_size, self.device)
 
     def observe(self, inputs, labels, not_aug_inputs):

@@ -10,8 +10,10 @@ def get_all_models():
 
 names = {}
 for model in get_all_models():
+    # print(get_all_models())
     mod = importlib.import_module('model.' + model)
     class_name = {x.lower(): x for x in mod.__dir__()}[model.replace('_', '')]
+    # print(class_name)
     names[model] = getattr(mod, class_name)
 
 

@@ -15,19 +15,18 @@ from datasets import get_dataset
 import sys
 from datetime import datetime
 import json
-
-try:
-    import wandb
-except ImportError:
-    wandb = None
 from torchinfo import summary
-
 from sklearn.metrics import confusion_matrix, f1_score, roc_curve, auc, roc_auc_score
 from sklearn.metrics import accuracy_score, precision_score, recall_score
 import seaborn as sn
 import pandas as pd
 import matplotlib.pyplot as plt
 from PIL import Image
+# This is for training visualization
+try:
+    import wandb
+except ImportError:
+    wandb = None
 
 
 def wandb_init(args):
@@ -35,7 +34,9 @@ def wandb_init(args):
     # naming convention
 
     wandb_name = str(args.model) + "_" + str(date_time)
-    wandb.init(project=args.wandb_project, name=wandb_name, config=vars(args))
+    wandb.init(project=args.wandb_project,
+               name=wandb_name,
+               config=vars(args))
 
 
 def mask_classes(outputs: torch.Tensor, dataset: ContinualDataset, k: int) -> None:
@@ -75,24 +76,35 @@ def ctrain(model: ContinualModel, dataset: ContinualDataset,
     date_time = datetime.now().strftime('%Y%m%d%H%M%S')
     result_dir = mk_dir(os.path.join(result_dir, str(args.model) + "_" + date_time))
     result_data_dir = mk_dir(os.path.join(result_dir, 'metrics'))
+
     if args.save_ckpt:
         result_ckpt_dir = mk_dir(os.path.join(result_dir, "ckpt"))
     with open(os.path.join(result_dir, 'args.json'), 'w') as fp:
         json.dump(vars(args), fp)
     if args.csv_log:
         csv_logger = CsvLogger(dataset.SETTING, dataset.NAME, model.NAME)
+
+    # Initialize the network
     model.net.to(model.device)
+    # Output the backbone network summary
     summary(model, input_size=(args.batch_size, 3, 224, 224))
+    # ID list for domain incremental learning
     domain_id = process_domain_id(args.domain_id)
     print("Performing Domain Incremental Learning in Domains with classes {}: {}\n".format(dataset.N_CLASSES_PER_TASK,
                                                                                            domain_id))
+
+    # If we use W&B to visualize the training process
     if args.usewandb:
         assert wandb is not None, "Wandb not installed, please install it or run without wandb"
-        wandb_init(args)
+        wandb_init(args)  # Initialize wandb
+
     results, results_mask_classes = [], []
 
+    # If we use csv or to record the training
     if args.csv_log:
         csv_logger = CsvLogger(dataset.SETTING, dataset.NAME, model.NAME)
+
+    # If we use tensorboard to visualize the training process
     if args.tensorboard:
         tb_logger = TensorboardLogger(args, dataset.SETTING)
 
@@ -109,8 +121,10 @@ def ctrain(model: ContinualModel, dataset: ContinualDataset,
                                                                     dataset_copy,
                                                                     t=domain_id[-1],
                                                                     random_test=True)
+
     model.net.train()
     record_list = []
+
     # training each Domain Dataset
     for id in range(len(domain_id)):
         print("Domain ID: ", domain_id[id])
@@ -167,7 +181,7 @@ def train_each(model, dataset, args, csvlogger, user_id, perm=False, t=0, metric
             if hasattr(dataset.train_loader.dataset, 'logits'):
                 inputs, labels, not_aug_inputs, logits = data
                 inputs = inputs.to(model.device)
-                # labels = labels.clone().detach()
+                labels = labels.clone().detach()
                 # labels = torch.tensor(labels)
                 not_aug_inputs = not_aug_inputs.to(model.device)
                 logits = logits.to(model.device)
@@ -181,7 +195,7 @@ def train_each(model, dataset, args, csvlogger, user_id, perm=False, t=0, metric
             else:
                 inputs, labels, not_aug_inputs = data
                 inputs = inputs.to(model.device)
-                # labels = labels.clone().detach()
+                labels = labels.clone().detach()
                 # labels = torch.tensor(labels)
                 labels = labels.to(model.device)
                 not_aug_inputs = not_aug_inputs.to(model.device)
@@ -193,13 +207,20 @@ def train_each(model, dataset, args, csvlogger, user_id, perm=False, t=0, metric
                 outputs = model(inputs)
                 _, pred = torch.max(outputs.data, 1)
                 correct += torch.sum(pred == labels).item()
-                acur = (correct / len(train_loader)) * 100
+                # print(outputs)
+                # print(pred)
+                # print(labels)
+                # print(correct, len(train_loader))
+                if correct > len(labels):
+                    print("Correct: ", correct, "Total: ", len(labels))
+                    quit()
+                acur = (correct / len(labels)) * 100
 
             progress_bar_with_acc(i, len(train_loader), epoch, user_id, loss, acur)
 
             if args.usewandb:
                 wandb.log({'train_loss': loss})
-                wandb.log({'train_accuracy': acur * 100})
+                wandb.log({'train_accuracy': acur})
 
         if scheduler is not None:
             scheduler.step()
@@ -283,8 +304,8 @@ def custom_evaluate(args, model: ContinualModel,
                                                                                 round(individual_acc, 2)))
 
         f1.append(f1_temp)
-        accs.append(correct / total * 100
-                    if 'class-il' in model.COMPATIBILITY else 0)
+        accs.append(correct / total * 100)
+                    # if 'class-il' in model.COMPATIBILITY else 0)
         accs_mask_classes.append(correct_mask_classes / total * 100)
 
         f1_predicted = np.concatenate(f1_predicted)

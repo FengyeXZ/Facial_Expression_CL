@@ -13,7 +13,6 @@ sys.path.append(mammoth_path)
 sys.path.append(mammoth_path + '/datasets')
 sys.path.append(mammoth_path + '/backbone')
 sys.path.append(mammoth_path + '/model')
-
 from datasets import NAMES as DATASET_NAMES
 from model import get_all_models, get_model
 from argparse import ArgumentParser
@@ -27,12 +26,14 @@ import torch
 import uuid
 import datetime
 
+
 def lecun_fix():
     # Yann moved his website to CloudFlare. You need this now
     from six.moves import urllib
     opener = urllib.request.build_opener()
     opener.addheaders = [('User-agent', 'Mozilla/5.0')]
     urllib.request.install_opener(opener)
+
 
 def parse_args():
     parser = ArgumentParser(description='mammoth', allow_abbrev=False)
@@ -43,7 +44,6 @@ def parse_args():
     add_management_args(parser)
     args = parser.parse_known_args()[0]
     mod = importlib.import_module('model.' + args.model)
-    
 
     get_parser = getattr(mod, 'get_parser')
     parser = get_parser()
@@ -53,6 +53,7 @@ def parse_args():
         set_random_seed(args.seed)
 
     return args
+
 
 def main(args=None):
     lecun_fix()
@@ -83,6 +84,8 @@ def main(args=None):
     # set job name
     setproctitle.setproctitle('{}_{}_{}'.format(args.model, args.buffer_size if 'buffer_size' in args else 0,
                                                 args.dataset))
+
+    # Start training
     if isinstance(dataset, ContinualDataset):
         ctrain(model, dataset, args)
 

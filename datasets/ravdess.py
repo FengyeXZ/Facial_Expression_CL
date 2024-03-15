@@ -110,6 +110,9 @@ class RAVDESS(ContinualDataset):
         transforms.Normalize(MEAN, STD)
     ])
 
+    def get_data_loaders(self) -> Tuple[DataLoader, DataLoader]:
+        pass
+
     def get_nonperm_data_loaders(self):
         transform = transforms.Compose((transforms.ToTensor(),))
         train, test = store_ravdess_dataset(1, transform, self)
@@ -159,6 +162,18 @@ class RAVDESS(ContinualDataset):
     @staticmethod
     def get_denormalization_transform():
         return DeNormalize(RAVDESS.MEAN, RAVDESS.STD)
+
+    @staticmethod
+    def get_epochs():
+        return 30
+
+    @staticmethod
+    def get_batch_size():
+        return 64
+
+    @staticmethod
+    def get_minibatch_size():
+        return 32
 
 
 def main():
