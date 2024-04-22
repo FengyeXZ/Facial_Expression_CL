@@ -67,6 +67,8 @@ class CsvLogger:
         self.bwt_mask_classes = None
         self.forgetting = None
         self.forgetting_mask_classes = None
+        self.aia = None
+        self.aia_mask_classes = None
 
     def add_fwt(self, results, accs, results_mask_classes, accs_mask_classes):
         self.fwt = forward_transfer(results, accs)
@@ -80,6 +82,10 @@ class CsvLogger:
     def add_forgetting(self, results, results_mask_classes):
         self.forgetting = forgetting(results)
         self.forgetting_mask_classes = forgetting(results_mask_classes)
+
+    def add_aia(self, results, results_mask_classes):
+        self.aia = average_incremental_accuracy(results)
+        self.aia_mask_classes = average_incremental_accuracy(results_mask_classes)
 
     def log(self, mean_acc: np.ndarray) -> None:
         """

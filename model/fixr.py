@@ -29,7 +29,7 @@ class Fixr(ContinualModel):
 
         self.opt.zero_grad()
 
-        outputs, features = self.net(inputs, returnt='all')
+        outputs = self.net(inputs)
         loss = self.loss(outputs, labels)
 
         if not self.buffer.is_empty():

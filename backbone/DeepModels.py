@@ -10,7 +10,7 @@ from torchvision.models.efficientnet import EfficientNet_B0_Weights
 import torchvision.models as models
 
 
-def mammoth_efficientnet(nclasses: int, model_name: str, pretrained=True, train_bbone=False):
+def mammoth_efficientnet(nclasses: int, model_name: str, pretrained=True, train_bbone=True):
     """
     Instantiates a EfficientNet network.
     :param train_bbone:

@@ -45,7 +45,7 @@ class MyMEAD(Dataset):
         self.__process__()
 
     def __getitem__(self, idx: int) -> Tuple[type(Image), int, type(Image)]:
-        mean, std = (0.6740, 0.4463, 0.3831), (0.2017, 0.1714, 0.1607)
+        mean, std = (0.4799, 0.3502, 0.2903), (0.2443, 0.1662, 0.1368)
         img_size = self.img_size
         resize_img = 128
 
@@ -94,11 +94,11 @@ class MyMEAD(Dataset):
 
 
 class MEAD(ContinualDataset):
-    NAME = 'ravdess'
+    NAME = 'mead'
     SETTING = 'domain-il'
     N_CLASSES_PER_TASK = 6
     N_TASKS = 24  # Number of Domains
-    MEAN, STD = (0.6740, 0.4463, 0.3831), (0.2017, 0.1714, 0.1607)
+    MEAN, STD = (0.4799, 0.3502, 0.2903), (0.2443, 0.1662, 0.1368)
     IMG_SIZE = 112
     IMG_RESIZE = 128
     TRANSFORM = transforms.Compose([

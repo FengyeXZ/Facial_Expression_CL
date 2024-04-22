@@ -31,7 +31,7 @@ class RAVDESSDataset(Dataset):
             'surprise': 5
         }
         # 假设标签是基于目录结构：root/train/01/.../1img.png
-        for split in ['train', 'val', 'test']:
+        for split in ['train', 'val']:
             split_dir = os.path.join(self.root_dir, split)
             for domain in os.listdir(split_dir):
                 domain_dir = os.path.join(split_dir, domain)
@@ -74,7 +74,7 @@ def main():
         transforms.ToTensor(),
     ])
 
-    ravdess_dataset = RAVDESSDataset(root_dir='data/RAVDESS', transform=transform)
+    ravdess_dataset = RAVDESSDataset(root_dir='data/MEAD', transform=transform)
 
     loader = DataLoader(ravdess_dataset, batch_size=64, shuffle=False, num_workers=16)
 

@@ -4,7 +4,7 @@ import random
 from tqdm import tqdm
 
 
-def split_and_rename_data(source_folder, train_folder, test_folder, val_folder, train_size=0.7, val_size=0.15):
+def split_and_rename_data(source_folder, train_folder, test_folder, val_folder, train_size=0.8, val_size=0.2):
     # 创建训练、测试和验证目录
     for folder in [train_folder, test_folder, val_folder]:
         if not os.path.exists(folder):
@@ -49,9 +49,9 @@ def split_and_rename_data(source_folder, train_folder, test_folder, val_folder, 
 
 # 主要配置
 source_folder = 'dataTmp/expData-processed'  # 原始数据集目录
-train_folder = 'dataTmp/data/RAVDESS/train'  # 训练集目录
-test_folder = 'dataTmp/data/RAVDESS/test'  # 测试集目录
-val_folder = 'dataTmp/data/RAVDESS/val'  # 验证集目录
+train_folder = 'dataTmp/data/MEAD/train'  # 训练集目录
+test_folder = 'dataTmp/data/MEAD/test'  # 测试集目录
+val_folder = 'dataTmp/data/MEAD/val'  # 验证集目录
 
 # 执行数据集分割和重命名
 split_and_rename_data(source_folder, train_folder, test_folder, val_folder)

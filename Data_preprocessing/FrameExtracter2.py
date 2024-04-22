@@ -5,6 +5,9 @@ from multiprocessing import Process, Queue
 from mtcnn.mtcnn import MTCNN
 import cv2
 import numpy as np
+import glob
+import torch
+# from facenet_pytorch import MTCNN
 # import time
 # from tqdm import tqdm
 
@@ -92,10 +95,23 @@ def extract_frames(video_path, output_folder, fps=2):
     if not os.path.exists(output_folder):
         os.makedirs(output_folder)
 
+    # 确定当前最后一帧的编号
+    existing_files = glob.glob(os.path.join(output_folder, 'img_*.png'))
+    if existing_files:
+        # 提取所有现有文件的编号并找到最大值
+        last_num = max([int(os.path.splitext(os.path.basename(f))[0].split('_')[1]) for f in existing_files])
+    else:
+        last_num = 0
+
+    # 构造ffmpeg命令
     command = [
-        'ffmpeg', '-loglevel', 'panic', '-i', video_path, '-vf', f'fps={fps}',
-        f'{output_folder}/img_%d.png'
+        'ffmpeg', '-loglevel', 'panic', '-i', video_path,
+        '-vf', f'fps={fps}', os.path.join(output_folder, f'img_%d.png')
     ]
+
+    # 调用ffmpeg并指定新的开始编号
+    command.insert(-1, '-start_number')
+    command.insert(-1, str(last_num + 1))
     subprocess.run(command, shell=True)
 
 
@@ -105,6 +121,7 @@ def frames_processor(frames_queue, face_detector: MTCNN, frames_dir: str, output
             print("Processing frames...")
             frames_folder = frames_queue.get()
             if frames_folder is None:
+                frames_queue.put(None)
                 break
             levels = os.listdir(frames_dir)
             for level in levels:
@@ -184,15 +201,16 @@ if __name__ == '__main__':
     source_dir = 'E:/MEAD-frontOnly'
     # source_dir = '../expData'
     tmp_dir = '../tmp'
-    frames_tmp_dir = 'E:/MEAD-frontOnly-frames'
+    frames_tmp_dir = 'E:/MEAD-frontOnly-frames2'
     # frames_tmp_dir = '../target'
     # frames_processed_dir = '../target-processed'
-    frames_processed_dir = 'E:/MEAD-frontOnly-frames-processed'
+    frames_processed_dir = 'E:/MEAD-frontOnly-frames-processed2'
 
-    emotion_classes = ['angry', 'disgusted', 'fear', 'happy', 'neutral', 'surprised']
+    emotion_classes = ['angry', 'disgusted', 'fear', 'happy', 'sad', 'surprised']
     video_folders = os.listdir(source_dir)
     print(video_folders)
 
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     detector = MTCNN()
 
     # extract_frames(os.path.join(source_dir, video_folders[0], 'angry', 'level_1', '001.mp4'), '../tmp')
@@ -209,13 +227,22 @@ if __name__ == '__main__':
                                                        emotion_classes))
     loader = Process(target=videos_loader, args=(fileloader_queue, extraction_queue, source_dir, tmp_dir))
     processor = Process(target=frames_processor, args=(processor_queue, detector, frames_tmp_dir, frames_processed_dir))
+    processor2 = Process(target=frames_processor, args=(processor_queue, detector, frames_tmp_dir, frames_processed_dir))
+    processor3 = Process(target=frames_processor, args=(processor_queue, detector, frames_tmp_dir, frames_processed_dir))
+    processor4 = Process(target=frames_processor, args=(processor_queue, detector, frames_tmp_dir, frames_processed_dir))
 
     extractor.start()
     loader.start()
     processor.start()
+    processor2.start()
+    processor3.start()
+    processor4.start()
 
     extractor.join()
     loader.join()
     processor.join()
+    processor2.join()
+    processor3.join()
+    processor4.join()
 
     print("All videos have been processed.")

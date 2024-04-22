@@ -32,3 +32,20 @@ def forgetting(results):
         li.append(maxx[i] - results[-1][i])
 
     return np.mean(li)
+
+
+def average_incremental_accuracy(results):
+    n_tasks = len(results)
+    task_accuracies = []
+
+    # 确保所有任务结果长度一致
+    for i in range(n_tasks):
+        results[i] += [0.0] * (n_tasks - len(results[i]))
+
+    # 计算每个任务的平均性能
+    for result in results:
+        task_accuracies.append(np.mean(result))
+
+    # 计算所有任务的平均性能
+    aia = np.mean(task_accuracies)
+    return aia

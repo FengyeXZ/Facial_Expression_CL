@@ -2,6 +2,7 @@
 # and https://github.com/rahullabs/FIXR_Public.git
 import json
 import torch
+from torch.utils.data import ConcatDataset, DataLoader
 from utils.status import progress_bar, create_stash, progress_bar_with_acc
 from utils.tb_logger import *
 from utils.loggers import *
@@ -12,6 +13,7 @@ from model.utils.continual_model import ContinualModel
 from datasets.utils.continual_dataset import ContinualDataset
 from typing import Tuple
 from datasets import get_dataset
+from datasets.ravdess import MyRAVDESS
 import sys
 from datetime import datetime
 import json
@@ -21,6 +23,7 @@ from sklearn.metrics import accuracy_score, precision_score, recall_score
 import seaborn as sn
 import pandas as pd
 import matplotlib.pyplot as plt
+import time
 from PIL import Image
 # This is for training visualization
 try:
@@ -153,6 +156,7 @@ def ctrain(model: ContinualModel, dataset: ContinualDataset,
         csv_logger.add_forgetting(results, results_mask_classes)
         csv_logger.add_fwt(results, random_results_class,
                            results_mask_classes, random_results_task)
+        csv_logger.add_aia(results, results_mask_classes)
 
     if args.csv_log:
         csv_logger.write(vars(args))
@@ -161,13 +165,24 @@ def ctrain(model: ContinualModel, dataset: ContinualDataset,
         wandb.log({'bwt': csv_logger.bwt})
         wandb.log({'fwt': csv_logger.fwt})
         wandb.log({'forgetting': csv_logger.forgetting})
+        wandb.log({'aia': csv_logger.aia})
+        draw_confusion_mat(args, model, dataset)
         wandb.finish()
 
 
 def train_each(model, dataset, args, csvlogger, user_id, perm=False, t=0, metric_dir=None):
+    # if args.usewandb:
+    #     wandb.log({'Domain ID': int(user_id)})
+    start_time = time.time()
     result_metric_dir = metric_dir
 
     train_loader, test_loader = dataset.data_loader_with_did(did=user_id)
+
+    if model.NAME == 'joint':
+        model.old_train.append(train_loader.dataset)
+        model.old_test.append(test_loader.dataset)
+        train_loader = DataLoader(ConcatDataset(model.old_train), batch_size=args.batch_size, shuffle=True, drop_last=True)
+        test_loader = DataLoader(ConcatDataset(model.old_test), batch_size=args.batch_size, shuffle=False, drop_last=True)
 
     if hasattr(model, 'begin_task'):
         model.begin_task(dataset)
@@ -175,6 +190,8 @@ def train_each(model, dataset, args, csvlogger, user_id, perm=False, t=0, metric
     user_id_no = user_id
     scheduler = dataset.get_scheduler(model, args)
     for epoch in range(model.args.n_epochs):
+        # if args.usewandb:
+        #     wandb.log({'Epoch': epoch})
         for i, data in enumerate(train_loader):
             # print(i, data)
             correct, correct_mask_classes, total = 0.0, 0.0, 0.0
@@ -240,7 +257,10 @@ def train_each(model, dataset, args, csvlogger, user_id, perm=False, t=0, metric
     mean_acc = np.mean(accs, axis=1)
     print_mean_accuracy_face(mean_acc, t + 1, dataset.SETTING)
     if args.usewandb:
-        wandb.log({'Overall Test Accuracy': round(mean_acc[0], 2)})
+        wandb.log({'Domain ID': int(user_id), 'Overall Test Accuracy': round(mean_acc[0], 2)})
+        end_time = time.time()
+        print("Time taken for training: ", end_time - start_time)
+        wandb.log({'Domain ID': int(user_id), 'Time taken for training': end_time - start_time})
 
     if args.csv_log:
         csvlogger.log(mean_acc)
@@ -358,3 +378,43 @@ def metrics_eval(args, result_dir, predicted, score, target, name, no_classess):
     roc_dir = mk_dir(os.path.join(result_dir, "roc"))
     plt.savefig(os.path.join(roc_dir, name + 'roc.png'))
     plt.clf()
+
+
+def draw_confusion_mat(args, model: ContinualModel, dataset: ContinualDataset):
+    """
+    Evaluates the accuracy of the model for each past task.
+    :param model: the model to be evaluated
+    :param dataset: the continual dataset at hand
+    :return: a tuple of lists, containing the class-il
+             and task-il accuracy for each task
+    """
+    model.net.eval()
+
+    for k, test_loader in enumerate(dataset.test_loaders):
+        preds = []
+        labels = []
+        for data in test_loader:
+            with torch.no_grad():
+                inputs, batch_labels, _ = data
+                inputs = inputs.to(model.device)
+                batch_labels = batch_labels.clone().detach()
+                batch_labels = batch_labels.to(model.device)
+
+                outputs = model(inputs)
+                _, batch_preds = torch.max(outputs.data, 1)
+
+                preds.append(batch_preds.cpu())
+                labels.append(batch_labels.cpu())
+
+        # Concatenate all batches
+        preds = torch.cat(preds)
+        labels = torch.cat(labels)
+
+        if args.usewandb:
+            wandb.log({
+                "Confusion Matrix {}".format(k): wandb.plot.confusion_matrix(
+                    preds=preds.numpy(),
+                    y_true=labels.numpy(),
+                    class_names=['angry', 'disgust', 'fear', 'happy', 'sad', 'surprise'],
+                    title="Actors {}".format(k))
+            })
